@@ -11,7 +11,7 @@ from local_settings import TwitterKey, BitlyKey
 logging.basicConfig(filename='log.txt', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def run():
+def run(subreddit_url):
     conn = sqlite3.connect('tweets.db')
     # if table not exists, create table
     cur = conn.cursor()
@@ -30,7 +30,7 @@ def run():
 
     shortapi = bitly.Api(login=BitlyKey['login'], apikey=BitlyKey['apikey'])
 
-    url = 'http://www.reddit.com/r/programming/.json'
+    url = subreddit_url
 
     jsondata = json.loads(urllib2.urlopen(url).read())
 
@@ -53,8 +53,13 @@ def run():
                 permalink = shortapi.shorten('http://www.reddit.com' + entry['permalink'])
                 url = shortapi.shorten(entry['url'])
                 author = entry['author']
-                status = ' %s [%s by:%s comments:%d score:%d]' % (url, permalink, author, num_comments, score)
-                status = title[:(135 - len(status))] + status
+                status = ' %s #baseball' % (permalink)
+                if len(title) > (139 - len(status)):
+                    status = '...' + status
+                    title = title.rstrip('\"\' .')
+                    status = status = title[:(139 - len(status))] + status
+                else:
+                    status = title[:(139 - len(status))] + status
                 status = status.encode('utf-8')
 
                 logging.debug(status)
@@ -64,4 +69,4 @@ def run():
     conn.close()
 
 if __name__ == '__main__':
-    run()
+    run('http://www.reddit.com/r/baseball/new.json')
