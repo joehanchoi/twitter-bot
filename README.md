@@ -4,6 +4,6 @@ with a few modifications for bug fixes, text parsing, and following multiple
 twitter accounts. Read that repo for more information on the actual script.
 
 ## Requirements
-tweepy 2.1
-beautifulsoup
-simplejson
+* beautifulsoup
+* simplejson
+* tweepy 2.1

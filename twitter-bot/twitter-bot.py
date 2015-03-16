@@ -6,12 +6,12 @@ import tweepy
 import bitly
 import urllib2
 import sqlite3
-from local_settings import TwitterKey, BitlyKey
+from local_settings import BitlyKey, Subreddits
 
 logging.basicConfig(filename='log.txt', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def run(subreddit_url):
+def run(subreddit):
     conn = sqlite3.connect('tweets.db')
     # if table not exists, create table
     cur = conn.cursor()
@@ -19,10 +19,10 @@ def run(subreddit_url):
     if query.fetchone()[0] <= 0:
         cur.execute("CREATE TABLE tweet_table(Id INTEGER PRIMARY KEY, reddit_id TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
 
-    consumer_key = TwitterKey['consumer_key']
-    consumer_secret = TwitterKey['consumer_secret']
-    access_token = TwitterKey['access_token']
-    access_token_secret = TwitterKey['access_token_secret']
+    consumer_key = subreddit['TwitterKey']['consumer_key']
+    consumer_secret = subreddit['TwitterKey']['consumer_secret']
+    access_token = subreddit['TwitterKey']['access_token']
+    access_token_secret = subreddit['TwitterKey']['access_token_secret']
 
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
@@ -30,7 +30,7 @@ def run(subreddit_url):
 
     shortapi = bitly.Api(login=BitlyKey['login'], apikey=BitlyKey['apikey'])
 
-    url = subreddit_url
+    url = subreddit['url']
 
     jsondata = json.loads(urllib2.urlopen(url).read())
 
@@ -47,13 +47,13 @@ def run(subreddit_url):
 
             if len(query.fetchall()) == 0 and num_comments > 5:
                 title = entry['title']
-                score = entry['score']
-                downs = entry['downs']
-                ups = entry['ups']
+                # score = entry['score']
+                # downs = entry['downs']
+                # ups = entry['ups']
+                # author = entry['author']
                 permalink = shortapi.shorten('http://www.reddit.com' + entry['permalink'])
                 url = shortapi.shorten(entry['url'])
-                author = entry['author']
-                status = ' %s #baseball' % (permalink)
+                status = ' %s %s' % (permalink, subreddit['hashtag'])
                 if len(title) > (139 - len(status)):
                     status = '...' + status
                     title = title.rstrip('\"\' .')
@@ -69,4 +69,5 @@ def run(subreddit_url):
     conn.close()
 
 if __name__ == '__main__':
-    run('http://www.reddit.com/r/baseball/new.json')
+    for subreddit in Subreddits:
+        run(subreddit)
